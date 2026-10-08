@@ -172,7 +172,6 @@ async function sendPlanInvoice(ctx, plan) {
     `Dom.VPN — ${plan.title}`,
     `VPN-подписка Dom.VPN на ${plan.title.toLowerCase()}`,
     payload,
-    '',
     'XTR',
     [{ label: plan.title, amount: plan.price }],
     { start_parameter: `vpn-${plan.id}` },
