@@ -187,16 +187,27 @@ function parseInvoicePayload(payload) {
 
 bot.callbackQuery(/^pay:(.+)$/, async (ctx) => {
   const plan = planById(ctx.match[1]);
-  await ctx.answerCallbackQuery();
   if (!plan) {
-    await ctx.reply('Этот тариф недоступен. Откройте /start и выберите другой.');
+    await ctx.answerCallbackQuery({ text: 'Тариф недоступен. Откройте /start и выберите другой.', show_alert: true });
     return;
   }
   if (!salesEnabled) {
-    await ctx.reply('Покупка пока отключена: VLESS-ссылка не настроена.');
+    await ctx.answerCallbackQuery({
+      text: 'Покупка отключена: Railway не получил VLESS_SUBSCRIPTION_URL.',
+      show_alert: true,
+    });
     return;
   }
-  await sendPlanInvoice(ctx, plan);
+  await ctx.answerCallbackQuery({ text: 'Создаю счёт в Telegram Stars…' });
+  try {
+    await sendPlanInvoice(ctx, plan);
+  } catch (error) {
+    console.error('Telegram Stars invoice failed:', error.message);
+    await ctx.reply('Telegram не смог создать счёт Stars. Проверьте Railway Deploy Logs или попробуйте позже.');
+    if (adminChatId) {
+      await bot.api.sendMessage(adminChatId, `Не удалось создать Stars-счёт. Ошибка Telegram: ${error.message}`);
+    }
+  }
 });
 
 bot.on('pre_checkout_query', async (ctx) => {
